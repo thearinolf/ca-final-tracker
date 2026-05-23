@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CA Final Study Tracker</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Flatpickr Datepicker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Mobile Header (Hidden on Desktop) -->
+        <header class="mobile-header">
+            <div class="mobile-logo">
+                <i class='bx bxs-graduation logo-icon'></i>
+                <h1>CA Final Tracker</h1>
+            </div>
+            <button class="hamburger-btn" onclick="toggleSidebar()">
+                <i class='bx bx-menu'></i>
+            </button>
+        </header>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="sidebar-header">
+                <i class='bx bxs-graduation logo-icon'></i>
+                <h1>CA Final Tracker</h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <i class='bx bxs-dashboard'></i> Dashboard
+                </a>
+                
+                <div class="nav-section">
+                    <h3>Group I</h3>
+                    <a href="#" class="nav-item sub-item" data-view="subject" data-subject="FR">Paper 1: FR</a>
+                    <a href="#" class="nav-item sub-item" data-view="subject" data-subject="AFM">Paper 2: AFM</a>
+                    <a href="#" class="nav-item sub-item" data-view="subject" data-subject="Audit">Paper 3: Audit</a>
+                </div>
+                
+                <div class="nav-section">
+                    <h3>Group II</h3>
+                    <a href="#" class="nav-item sub-item" data-view="subject" data-subject="DT">Paper 4: DT</a>
+                    <a href="#" class="nav-item sub-item" data-view="subject" data-subject="IDT">Paper 5: IDT</a>
+                    <a href="#" class="nav-item sub-item" data-view="subject" data-subject="IBS">Paper 6: IBS</a>
+                </div>
+                
+                <div class="nav-section">
+                    <h3>Other Reqs</h3>
+                    <a href="#" class="nav-item sub-item" data-view="subject" data-subject="ADVANCED_ICITSS">ADVANCED ICITSS</a>
+                    <a href="#" class="nav-item sub-item" data-view="subject" data-subject="SPOM">SPOM</a>
+                </div>
+                
+                <div class="nav-section">
+                    <h3>Overview</h3>
+                    <a href="#" class="nav-item sub-item" style="padding-left: 1rem;" data-view="mocks">
+                        <i class='bx bx-check-shield' style="font-size: 1.1rem; margin-right: 0.5rem; color: var(--text-secondary);"></i> Mock Tests
+                    </a>
+                    <a href="#" class="nav-item sub-item" style="padding-left: 1rem;" data-view="schedule">
+                        <i class='bx bx-calendar' style="font-size: 1.1rem; margin-right: 0.5rem; color: var(--text-secondary);"></i> Exam Schedule
+                    </a>
+                </div>
+                
+                <div class="nav-section" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                    <h3>Data Management</h3>
+                    <a href="#" class="nav-item sub-item" onclick="exportData()" style="padding-left: 1rem;">
+                        <i class='bx bx-cloud-download' style="font-size: 1.1rem; margin-right: 0.5rem; color: var(--text-secondary);"></i> Backup Data (.json)
+                    </a>
+                    <a href="#" class="nav-item sub-item" onclick="document.getElementById('import-file').click()" style="padding-left: 1rem;">
+                        <i class='bx bx-cloud-upload' style="font-size: 1.1rem; margin-right: 0.5rem; color: var(--text-secondary);"></i> Restore Data (.json)
+                    </a>
+                    <a href="#" class="nav-item sub-item" onclick="window.print()" style="padding-left: 1rem;">
+                        <i class='bx bxs-file-pdf' style="font-size: 1.1rem; margin-right: 0.5rem; color: var(--text-secondary);"></i> Save as PDF Report
+                    </a>
+                    <input type="file" id="import-file" style="display: none;" accept=".json,application/json,text/plain,*/*" onchange="importData(event)">
+                </div>
+            </nav>
+
+            <div class="overall-progress-container">
+                    <div class="progress-ring-small" style="position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                        <svg viewBox="0 0 100 100" style="width: 30px; height: 30px; position: absolute;">
+                            <defs>
+                                <clipPath id="overallFillClip">
+                                    <rect id="overall-progress-rect" x="0" y="100" width="100" height="0" />
+                                </clipPath>
+                            </defs>
+                            <polygon points="50 5, 88 27, 88 73, 50 95, 12 73, 12 27" 
+                                     fill="rgba(255, 255, 255, 0.05)" 
+                                     stroke="rgba(255, 255, 255, 0.15)" stroke-width="2"/>
+                            <polygon points="50 5, 88 27, 88 73, 50 95, 12 73, 12 27" 
+                                     fill="var(--accent-blue)" 
+                                     clip-path="url(#overallFillClip)" />
+                        </svg>
+                        <span id="overall-progress-text" style="position: absolute; font-size: 0.5rem; font-weight: bold; color: var(--text-primary); text-shadow: 0 1px 2px rgba(0,0,0,0.5);">0%</span>
+                    </div>
+                <p>Overall Progress</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dynamic Content Container -->
+            <div id="view-container">
+                <!-- Content will be injected here by JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="app.js"></script>
+</body>
+</html>
