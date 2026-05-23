@@ -2656,8 +2656,8 @@ window.renderPYQView = function() {
         terms.forEach(t => {
             const links = PYQ_DATA[t][p.id];
             html += `
-                <td style="padding: 1rem;">
-                    <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                <td style="padding: 1rem;" data-label="${t}">
+                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                         <a href="${links.qp}" target="_blank" rel="noopener noreferrer" title="Question Paper" style="padding: 6px 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; color: var(--accent-blue); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 0.2)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.1)'">
                             QP
                         </a>
