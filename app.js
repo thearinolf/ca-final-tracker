@@ -1,3 +1,29 @@
+// Firebase Initialization
+const firebaseConfig = {
+  apiKey: "AIzaSyBcx3yRO8eXk7L8ehLuIsOQuLYM0teU4_w",
+  authDomain: "ca-final-tracker-bf7e6.firebaseapp.com",
+  projectId: "ca-final-tracker-bf7e6",
+  storageBucket: "ca-final-tracker-bf7e6.firebasestorage.app",
+  messagingSenderId: "1040569064589",
+  appId: "1:1040569064589:web:243e458df3bcd785eb96c4"
+};
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = typeof firebase !== 'undefined' ? firebase.database() : null;
+
+window.syncTimeout = null;
+function showSyncing() {
+    const el = document.getElementById('sync-status');
+    if(el) {
+        el.style.opacity = '1';
+        clearTimeout(window.syncTimeout);
+        window.syncTimeout = setTimeout(() => {
+            el.style.opacity = '0';
+        }, 1500);
+    }
+}
+
 
 function getDirectPdfLinksHtml(subjectName, chapterName, index) {
     const defaultHtml = `<a href="https://boslive.icai.org/study_material_new_paper_details.php?c=final&language=English&year=Applicable%20for%20May%202026%20Exam%20Onwards" target="_blank" title="Open Official Study Material PDF" style="color: var(--accent-blue); text-decoration: none; display: inline-flex; align-items: center; transition: all 0.2s ease; padding: 2px 6px; background: rgba(59, 130, 246, 0.1); border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.2);">
@@ -1051,10 +1077,29 @@ function getChapterMetadata(subjectId, chapterIndex) {
 // State Management
 let progressData = {};
 
-function initData() {
-    const stored = localStorage.getItem('caFinalProgress');
-    if (stored) {
-        progressData = JSON.parse(stored);
+async function initData() {
+    if (db) {
+        try {
+            const snapshot = await db.ref('userData').once('value');
+            const cloudData = snapshot.val();
+            if (cloudData) {
+                if (cloudData.progressData) progressData = cloudData.progressData;
+                if (cloudData.examDate) localStorage.setItem('caFinalExamDate', cloudData.examDate);
+                if (cloudData.schedule) localStorage.setItem('caFinalSchedule', JSON.stringify(cloudData.schedule));
+                if (cloudData.mocks) localStorage.setItem('caFinalMocks', JSON.stringify(cloudData.mocks));
+            }
+        } catch (e) {
+            console.error("Firebase load error", e);
+        }
+    }
+    
+    // Fallback if cloudData didn't populate progressData
+    if (Object.keys(progressData).length === 0) {
+        const stored = localStorage.getItem('caFinalProgress');
+        if (stored) progressData = JSON.parse(stored);
+    }
+    
+    if (true) {
         
         // Patch missing subjects or chapters if syllabus was updated
         let updated = false;
@@ -1115,6 +1160,11 @@ function initData() {
 function saveData() {
     localStorage.setItem('caFinalProgress', JSON.stringify(progressData));
     updateOverallProgress();
+    
+    if (db) {
+        showSyncing();
+        db.ref('userData/progressData').set(progressData);
+    }
 }
 
 function getChapterAverageMarks(marksStr) {
@@ -1880,6 +1930,10 @@ window.updateScheduleDate = function(el, subjectId) {
     const scheduleData = JSON.parse(localStorage.getItem('caFinalSchedule') || '{}');
     scheduleData[subjectId] = el.value;
     localStorage.setItem('caFinalSchedule', JSON.stringify(scheduleData));
+    if (db) {
+        showSyncing();
+        db.ref('userData/schedule').set(scheduleData);
+    }
 };
 
 function renderMockTestView() {
@@ -1992,6 +2046,10 @@ window.updateMockData = function(subjectId, mockId, field, value) {
     
     mockData[subjectId][mockId][field] = value;
     localStorage.setItem('caFinalMocks', JSON.stringify(mockData));
+    if (db) {
+        showSyncing();
+        db.ref('userData/mocks').set(mockData);
+    }
     
     updateOverallProgress();
     
@@ -2156,8 +2214,8 @@ document.querySelectorAll('.nav-item').forEach(item => {
 });
 
 // App Initialization
-document.addEventListener('DOMContentLoaded', () => {
-    initData();
+document.addEventListener('DOMContentLoaded', async () => {
+    await initData();
     updateOverallProgress();
     renderDashboard();
 });
