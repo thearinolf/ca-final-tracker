@@ -1373,6 +1373,10 @@ function calculateDaysLeft(dateStr = null) {
 window.updateExamDate = function(el) {
     localStorage.setItem('caFinalExamDate', el.value);
     document.getElementById('days-left').innerText = calculateDaysLeft();
+    if (db) {
+        showSyncing();
+        db.ref('userData/examDate').set(el.value);
+    }
 };
 
 function renderDashboard() {
