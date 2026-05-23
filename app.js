@@ -1078,11 +1078,19 @@ function getChapterMetadata(subjectId, chapterIndex) {
 
 // State Management
 let progressData = {};
+let notesData = {};
+let announcementsData = { icai: "", docs: "" };
 
 function initData() {
     // 1. Load from LocalStorage instantly
     const stored = localStorage.getItem('caFinalProgress');
     if (stored) progressData = JSON.parse(stored);
+    
+    const storedNotes = localStorage.getItem('caFinalNotes');
+    if (storedNotes) notesData = JSON.parse(storedNotes);
+    
+    const storedAnn = localStorage.getItem('caFinalAnnouncements');
+    if (storedAnn) announcementsData = JSON.parse(storedAnn);
     
     // 2. Patch missing subjects
     let updated = false;
@@ -1115,6 +1123,8 @@ function initData() {
             if (cloudData) {
                 let changed = false;
                 if (cloudData.progressData) { progressData = cloudData.progressData; changed = true; }
+                if (cloudData.notesData) { notesData = cloudData.notesData; localStorage.setItem('caFinalNotes', JSON.stringify(notesData)); changed = true; }
+                if (cloudData.announcementsData) { announcementsData = cloudData.announcementsData; localStorage.setItem('caFinalAnnouncements', JSON.stringify(announcementsData)); changed = true; }
                 if (cloudData.examDate) { localStorage.setItem('caFinalExamDate', cloudData.examDate); changed = true; }
                 if (cloudData.schedule) { localStorage.setItem('caFinalSchedule', JSON.stringify(cloudData.schedule)); changed = true; }
                 if (cloudData.mocks) { localStorage.setItem('caFinalMocks', JSON.stringify(cloudData.mocks)); changed = true; }
@@ -1132,6 +1142,8 @@ function initData() {
                         }
                         else if (view === 'mock') renderMockTestsView();
                         else if (view === 'schedule') renderScheduleView();
+                        else if (view === 'announcements') renderAnnouncementsView();
+                        else if (view === 'pyq') renderPYQView();
                     } else {
                         renderDashboard();
                     }
@@ -1146,11 +1158,15 @@ function initData() {
 
 function saveData() {
     localStorage.setItem('caFinalProgress', JSON.stringify(progressData));
+    localStorage.setItem('caFinalNotes', JSON.stringify(notesData));
+    localStorage.setItem('caFinalAnnouncements', JSON.stringify(announcementsData));
     updateOverallProgress();
     
     if (db) {
         showSyncing();
         db.ref('userData/progressData').set(progressData);
+        db.ref('userData/notesData').set(notesData);
+        db.ref('userData/announcementsData').set(announcementsData);
     }
 }
 
@@ -1724,6 +1740,23 @@ function renderSubjectView(subjectId) {
         </div>
     `;
     
+    if (subjectId !== 'ADVANCED_ICITSS') {
+        let subjectNotes = notesData[subjectId] || '';
+        html += `
+            <div class="quick-notes-container glass-panel" style="margin-top: 1.5rem; margin-bottom: 2rem; padding: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <i class='bx bx-notepad' style="color: var(--accent-blue); font-size: 1.2rem;"></i>
+                    <h3 style="margin: 0; font-size: 1rem; color: var(--text-primary); font-weight: 600;">Quick Notes & Weak Topics</h3>
+                </div>
+                <textarea placeholder="Jot down weak topics, teacher advice, or important formulas..." 
+                    style="width: 100%; min-height: 80px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-primary); padding: 0.75rem; font-family: var(--font-family); font-size: 0.9rem; resize: vertical; outline: none; transition: all 0.3s;" 
+                    onblur="saveNotes('${subjectId}', this.value)" 
+                    onfocus="this.style.borderColor='var(--accent-blue)'; this.style.background='rgba(0,0,0,0.4)';" 
+                    onfocusout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(0,0,0,0.2)';">${subjectNotes}</textarea>
+            </div>
+        `;
+    }
+    
     if (subjectId === 'IBS') {
         html += renderIBSDashboard();
         html += `</div>`;
@@ -2063,6 +2096,11 @@ window.updateMockData = function(subjectId, mockId, field, value) {
 };
 
 // Interactions
+window.saveNotes = function(subjectId, value) {
+    notesData[subjectId] = value;
+    saveData();
+};
+
 window.updateDate = function(el, subjectId, chapterIndex, metricId) {
     if (!progressData[subjectId][chapterIndex]) {
         progressData[subjectId][chapterIndex] = {};
@@ -2149,6 +2187,10 @@ document.querySelectorAll('.nav-item').forEach(item => {
             renderMockTestView();
         } else if (view === 'schedule') {
             renderScheduleView();
+        } else if (view === 'announcements') {
+            renderAnnouncementsView();
+        } else if (view === 'pyq') {
+            renderPYQView();
         }
     });
 });
@@ -2243,6 +2285,8 @@ document.addEventListener('DOMContentLoaded', () => {
 window.exportData = function() {
     const backup = {
         progressData: progressData,
+        notesData: notesData,
+        announcementsData: announcementsData,
         examDate: localStorage.getItem('caFinalExamDate') || '',
         schedule: JSON.parse(localStorage.getItem('caFinalSchedule') || '{}'),
         mocks: JSON.parse(localStorage.getItem('caFinalMocks') || '{}')
@@ -2271,6 +2315,10 @@ window.importData = function(event) {
                 // Support backwards compatibility
                 if (importedData.progressData) {
                     progressData = importedData.progressData;
+                    notesData = importedData.notesData || {};
+                    announcementsData = importedData.announcementsData || { icai: "", docs: "" };
+                    localStorage.setItem('caFinalNotes', JSON.stringify(notesData));
+                    localStorage.setItem('caFinalAnnouncements', JSON.stringify(announcementsData));
                     localStorage.setItem('caFinalExamDate', importedData.examDate || '');
                     localStorage.setItem('caFinalSchedule', JSON.stringify(importedData.schedule || {}));
                     localStorage.setItem('caFinalMocks', JSON.stringify(importedData.mocks || {}));
@@ -2283,6 +2331,8 @@ window.importData = function(event) {
                     showSyncing();
                     db.ref('userData').set({
                         progressData: progressData,
+                        notesData: notesData,
+                        announcementsData: announcementsData,
                         examDate: localStorage.getItem('caFinalExamDate') || '',
                         schedule: JSON.parse(localStorage.getItem('caFinalSchedule') || '{}'),
                         mocks: JSON.parse(localStorage.getItem('caFinalMocks') || '{}')
@@ -2352,4 +2402,281 @@ window.handleLogout = function() {
             window.location.reload();
         });
     }
+};
+
+// --- Auto-Logout on Inactivity ---
+let inactivityTimer;
+const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    if (auth && auth.currentUser) {
+        inactivityTimer = setTimeout(() => {
+            auth.signOut().then(() => {
+                alert("You have been securely logged out due to 10 minutes of inactivity.");
+                window.location.reload();
+            });
+        }, INACTIVITY_LIMIT);
+    }
+}
+
+// Listen for interactions to reset the timer
+['mousemove', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evt => {
+    window.addEventListener(evt, resetInactivityTimer, { passive: true });
+});
+
+// --- Announcements & Docs ---
+window.saveGlobalAnnouncements = function(type, value) {
+    if (!announcementsData) announcementsData = { icai: "", docs: "" };
+    announcementsData[type] = value;
+    saveData();
+};
+
+window.renderAnnouncementsView = function() {
+    const container = document.getElementById('view-container');
+    
+    let icaiText = (announcementsData && announcementsData.icai) ? announcementsData.icai : "";
+    let docsText = (announcementsData && announcementsData.docs) ? announcementsData.docs : "";
+    
+    let html = `
+        <div class="view-header" style="margin-bottom: 2rem;">
+            <h2 style="margin: 0; font-size: 1.8rem; display: flex; align-items: center; gap: 0.8rem; color: var(--text-primary);">
+                <i class='bx bx-news' style="color: var(--accent-blue);"></i>
+                Announcements & Documents
+            </h2>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.95rem;">
+                Keep track of important ICAI updates and store links to your study materials here.
+            </p>
+        </div>
+        
+        <div class="glass-panel" style="margin-bottom: 2rem; padding: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <i class='bx bxs-megaphone' style="color: var(--accent-purple); font-size: 1.2rem;"></i>
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary);">ICAI Announcements</h3>
+            </div>
+            <textarea placeholder="Paste new syllabus updates, exam forms dates, or any ICAI notifications here..." 
+                style="width: 100%; min-height: 150px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-primary); padding: 1rem; font-family: var(--font-family); font-size: 0.95rem; resize: vertical; outline: none; transition: all 0.3s;" 
+                onblur="saveGlobalAnnouncements('icai', this.value)" 
+                onfocus="this.style.borderColor='var(--accent-purple)'; this.style.background='rgba(0,0,0,0.4)';" 
+                onfocusout="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(0,0,0,0.2)';">${icaiText}</textarea>
+        </div>
+
+        <div class="glass-panel" style="padding: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <i class='bx bx-link-external' style="color: var(--success); font-size: 1.2rem;"></i>
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary);">Important ICAI Links</h3>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                <a href="https://boslive.icai.org/" target="_blank" style="display: flex; align-items: center; gap: 1rem; padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; text-decoration: none; color: var(--text-primary); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class='bx bx-book-open' style="font-size: 1.5rem; color: var(--accent-blue);"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">BoS Knowledge Portal</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Study Material, RTPs, MTPs</div>
+                    </div>
+                </a>
+                
+                <a href="https://eservices.icai.org/" target="_blank" style="display: flex; align-items: center; gap: 1rem; padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; text-decoration: none; color: var(--text-primary); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(168, 85, 247, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class='bx bx-user-circle' style="font-size: 1.5rem; color: var(--accent-purple);"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">SSP Portal</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Exam Forms & Registration</div>
+                    </div>
+                </a>
+
+                <a href="https://icai-cds.org/" target="_blank" style="display: flex; align-items: center; gap: 1rem; padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; text-decoration: none; color: var(--text-primary); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class='bx bx-cart' style="font-size: 1.5rem; color: var(--success);"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">CDS Portal</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Order Study Material</div>
+                    </div>
+                </a>
+                
+                <a href="https://www.icai.org/" target="_blank" style="display: flex; align-items: center; gap: 1rem; padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; text-decoration: none; color: var(--text-primary); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(245, 158, 11, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class='bx bx-globe' style="font-size: 1.5rem; color: #f59e0b;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">ICAI Main Website</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Official Homepage</div>
+                    </div>
+                </a>
+                
+                <a href="https://www.incometax.gov.in/iec/foportal/" target="_blank" style="display: flex; align-items: center; gap: 1rem; padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; text-decoration: none; color: var(--text-primary); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class='bx bx-rupee' style="font-size: 1.5rem; color: #ef4444;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">Income Tax Portal</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">E-Filing & Rules</div>
+                    </div>
+                </a>
+
+                <a href="https://www.gst.gov.in/" target="_blank" style="display: flex; align-items: center; gap: 1rem; padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; text-decoration: none; color: var(--text-primary); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class='bx bx-building-house' style="font-size: 1.5rem; color: var(--accent-blue);"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">GST Portal</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Goods & Services Tax</div>
+                    </div>
+                </a>
+
+                <a href="https://www.cbic.gov.in/" target="_blank" style="display: flex; align-items: center; gap: 1rem; padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; text-decoration: none; color: var(--text-primary); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(14, 165, 233, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class='bx bx-anchor' style="font-size: 1.5rem; color: #0ea5e9;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">CBIC (Customs)</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Customs & Indirect Taxes</div>
+                    </div>
+                </a>
+
+                <a href="https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html" target="_blank" style="display: flex; align-items: center; gap: 1rem; padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; text-decoration: none; color: var(--text-primary); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(168, 85, 247, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class='bx bx-book-bookmark' style="font-size: 1.5rem; color: var(--accent-purple);"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">Indian AS (MCA)</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Accounting Standards</div>
+                    </div>
+                </a>
+
+                <a href="https://www.icai.org/post/auditing-review-and-other-standards-complete-text" target="_blank" style="display: flex; align-items: center; gap: 1rem; padding: 1.2rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; text-decoration: none; color: var(--text-primary); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                    <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class='bx bx-check-shield' style="font-size: 1.5rem; color: var(--success);"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">Auditing Standards</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">SQC, SAs, SREs (ICAI)</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+};
+
+// --- Previous Year Questions (PYQs) ---
+window.selectedPyqTerm = "Jan 2026";
+
+const PYQ_DATA = {
+    "Jan 2026": {
+        "P1": { qp: "https://resource.cdn.icai.org/90237bos-aps3809-final-p1.pdf", ans: "https://resource.cdn.icai.org/91141bos-aps4314-sa-jan2026-p1.pdf" },
+        "P2": { qp: "https://resource.cdn.icai.org/90270bos-aps3809-final-p2.pdf", ans: "https://resource.cdn.icai.org/91147bos-aps4314-sa-jan2026-p2.pdf" },
+        "P3": { qp: "https://resource.cdn.icai.org/90287bos-aps3809-final-p3.pdf", ans: "https://resource.cdn.icai.org/91143bos-aps4314-sa-jan2026-p3.pdf" },
+        "P4": { qp: "https://resource.cdn.icai.org/90293bos-aps3809-final-p4.pdf", ans: "https://resource.cdn.icai.org/91144bos-aps4314-sa-jan2026-p4.pdf" },
+        "P5": { qp: "https://resource.cdn.icai.org/90320bos-aps3809-final-p5.pdf", ans: "https://resource.cdn.icai.org/91145bos-aps4314-sa-jan2026-p5.pdf" },
+        "P6": { qp: "https://resource.cdn.icai.org/90368bos-aps3809-final-p6.pdf", ans: "https://resource.cdn.icai.org/91146bos-aps4314-sa-jan2026-p6.pdf" }
+    },
+    "Sep 2025": {
+        "P1": { qp: "https://resource.cdn.icai.org/88181bos-aps2265-final-p1.pdf", ans: "https://resource.cdn.icai.org/89276bos-aps3012-final-p1.pdf" },
+        "P2": { qp: "https://resource.cdn.icai.org/88182bos-aps2265-final-p2.pdf", ans: "https://resource.cdn.icai.org/89277bos-aps3012-final-p2.pdf" },
+        "P3": { qp: "https://resource.cdn.icai.org/88298bos-final160925-p3.pdf", ans: "https://resource.cdn.icai.org/89278bos-aps3012-final-p3.pdf" },
+        "P4": { qp: "https://resource.cdn.icai.org/88299bos-final160925-p4.pdf", ans: "https://resource.cdn.icai.org/89279bos-aps3012-final-p4.pdf" },
+        "P5": { qp: "https://resource.cdn.icai.org/88300bos-final160925-p5.pdf", ans: "https://resource.cdn.icai.org/89280bos-aps3012-final-p5.pdf" },
+        "P6": { qp: "https://resource.cdn.icai.org/88274bos-aps2265-final-p6.pdf", ans: "https://resource.cdn.icai.org/89281bos-aps3012-final-p6.pdf" }
+    },
+    "May 2025": {
+        "P1": { qp: "https://resource.cdn.icai.org/85768bos-aps471-final-p1.pdf", ans: "https://resource.cdn.icai.org/86857bos-sa-final-may2025-g1-p1.pdf" },
+        "P2": { qp: "https://resource.cdn.icai.org/85769bos-aps471-final-p2.pdf", ans: "https://resource.cdn.icai.org/86858bos-sa-final-may2025-g1-p2.pdf" },
+        "P3": { qp: "https://resource.cdn.icai.org/85945bos-aps471-final-p3.pdf", ans: "https://resource.cdn.icai.org/86859bos-sa-final-may2025-g1-p3.pdf" },
+        "P4": { qp: "https://resource.cdn.icai.org/85946bos-aps471-final-p4.pdf", ans: "https://resource.cdn.icai.org/86860bos-sa-final-may2025-g2-p4.pdf" },
+        "P5": { qp: "https://resource.cdn.icai.org/85947bos-aps471-final-p5.pdf", ans: "https://resource.cdn.icai.org/86861bos-sa-final-may2025-g2-p5.pdf" },
+        "P6": { qp: "https://resource.cdn.icai.org/85948bos-aps471-final-p6.pdf", ans: "https://resource.cdn.icai.org/86862bos-sa-final-may2025-g2-p6.pdf" }
+    },
+    "Nov 2024": {
+        "P1": { qp: "https://resource.cdn.icai.org/82721bos66806.pdf", ans: "https://resource.cdn.icai.org/84423bos68027-p1.pdf" },
+        "P2": { qp: "https://resource.cdn.icai.org/82720bos66805.pdf", ans: "https://resource.cdn.icai.org/84424bos68027-p2.pdf" },
+        "P3": { qp: "https://resource.cdn.icai.org/82760bos66833.pdf", ans: "https://resource.cdn.icai.org/84425bos68027-p3.pdf" },
+        "P4": { qp: "https://resource.cdn.icai.org/82790bos66863.pdf", ans: "https://resource.cdn.icai.org/84426bos68027-p4.pdf" },
+        "P5": { qp: "https://resource.cdn.icai.org/82884bos66971p5.pdf", ans: "https://resource.cdn.icai.org/84427bos68027-p5.pdf" },
+        "P6": { qp: "https://resource.cdn.icai.org/82885bos66971p6.pdf", ans: "https://resource.cdn.icai.org/84428bos68027-p6.pdf" }
+    }
+};
+
+window.renderPYQView = function() {
+    const container = document.getElementById('view-container');
+    const terms = Object.keys(PYQ_DATA); // ["Jan 2026", "Sep 2025", "May 2025", "Nov 2024"]
+    
+    const papers = [
+        { id: "P1", name: "Paper-1: Financial Reporting", icon: "bx-line-chart" },
+        { id: "P2", name: "Paper-2: Advanced Financial Management", icon: "bx-trending-up" },
+        { id: "P3", name: "Paper-3: Advanced Auditing & Assurance", icon: "bx-check-shield" },
+        { id: "P4", name: "Paper-4: Direct Tax Laws", icon: "bx-file" },
+        { id: "P5", name: "Paper-5: Indirect Tax Laws", icon: "bx-receipt" },
+        { id: "P6", name: "Paper-6: Integrated Business Solutions", icon: "bx-briefcase" }
+    ];
+
+    let html = `
+        <div class="view-header" style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h2 style="margin: 0; font-size: 1.8rem; display: flex; align-items: center; gap: 0.8rem; color: var(--text-primary);">
+                        <i class='bx bx-table' style="color: var(--accent-purple);"></i>
+                        Previous Year Questions & Answers
+                    </h2>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.95rem;">
+                        Official ICAI Question Papers and Suggested Answers.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-panel" style="overflow-x: auto; padding: 1.5rem; margin-bottom: 2rem;">
+            <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+                <thead>
+                    <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                        <th style="padding: 1rem; text-align: left; color: var(--text-primary); font-weight: 600; font-size: 1.05rem;">Paper Name</th>
+                        ${terms.map(t => `<th style="padding: 1rem; text-align: center; color: var(--text-primary); font-weight: 600; font-size: 1.05rem;">${t}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    papers.forEach((p, index) => {
+        const isLast = index === papers.length - 1;
+        html += `
+            <tr style="border-bottom: ${isLast ? 'none' : '1px solid rgba(255,255,255,0.05)'}; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                <td style="padding: 1rem; color: var(--text-primary); font-weight: 500;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class='bx ${p.icon}' style="font-size: 1.2rem; color: var(--text-secondary);"></i>
+                        ${p.name}
+                    </div>
+                </td>
+        `;
+        
+        terms.forEach(t => {
+            const links = PYQ_DATA[t][p.id];
+            html += `
+                <td style="padding: 1rem;">
+                    <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <a href="${links.qp}" target="_blank" rel="noopener noreferrer" title="Question Paper" style="padding: 6px 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; color: var(--accent-blue); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 0.2)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.1)'">
+                            QP
+                        </a>
+                        <a href="${links.ans}" target="_blank" rel="noopener noreferrer" title="Suggested Answer" style="padding: 6px 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; color: var(--success); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='rgba(16, 185, 129, 0.2)'" onmouseout="this.style.background='rgba(16, 185, 129, 0.1)'">
+                            Ans
+                        </a>
+                    </div>
+                </td>
+            `;
+        });
+        
+        html += `</tr>`;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    container.innerHTML = html;
 };
