@@ -610,6 +610,8 @@ body {
         top: 0;
         left: -320px;
         height: 100vh;
+        flex-direction: column; /* Override 1024px row setting */
+        align-items: stretch;
         z-index: 1002;
         transition: left 0.3s ease;
         background: rgba(15, 23, 42, 0.98);
@@ -618,8 +620,29 @@ body {
         width: 280px;
     }
 
+    .nav-menu {
+        flex-direction: column;
+        align-items: stretch;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .nav-item {
+        white-space: normal;
+        margin-bottom: 0.5rem;
+    }
+
     .sidebar.active {
         left: 0;
+    }
+
+    .nav-section {
+        display: block;
+        margin-top: 1.5rem;
+    }
+    
+    .nav-section h3 {
+        display: block;
     }
 
     .sidebar-header {
