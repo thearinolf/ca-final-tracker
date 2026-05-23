@@ -12,6 +12,7 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = typeof firebase !== 'undefined' ? firebase.database() : null;
+const auth = typeof firebase !== 'undefined' ? firebase.auth() : null;
 
 window.syncTimeout = null;
 function showSyncing() {
@@ -2205,9 +2206,23 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 // App Initialization
 document.addEventListener('DOMContentLoaded', () => {
-    initData();
-    updateOverallProgress();
-    renderDashboard();
+    if (auth) {
+        auth.onAuthStateChanged(user => {
+            const overlay = document.getElementById('login-overlay');
+            if (user) {
+                if (overlay) overlay.style.display = 'none';
+                initData();
+                updateOverallProgress();
+                renderDashboard();
+            } else {
+                if (overlay) overlay.style.display = 'flex';
+            }
+        });
+    } else {
+        initData();
+        updateOverallProgress();
+        renderDashboard();
+    }
 });
 
 // Data Sync Functions
@@ -2285,4 +2300,42 @@ window.importData = function(event) {
         }
     };
     reader.readAsText(file);
+};
+
+window.handleLogin = function() {
+    if (!auth) return;
+    const email = document.getElementById('login-email').value;
+    const pass = document.getElementById('login-password').value;
+    const btn = document.getElementById('login-btn');
+    const err = document.getElementById('login-error');
+    
+    if (!email || !pass) {
+        err.innerText = "Please enter both email and password.";
+        err.style.display = 'block';
+        return;
+    }
+    
+    btn.innerText = "Signing in...";
+    btn.disabled = true;
+    err.style.display = 'none';
+    
+    auth.signInWithEmailAndPassword(email, pass)
+        .then(() => {
+            btn.innerText = "Sign In";
+            btn.disabled = false;
+        })
+        .catch(error => {
+            err.innerText = error.message;
+            err.style.display = 'block';
+            btn.innerText = "Sign In";
+            btn.disabled = false;
+        });
+};
+
+window.handleLogout = function() {
+    if (auth) {
+        auth.signOut().then(() => {
+            window.location.reload();
+        });
+    }
 };

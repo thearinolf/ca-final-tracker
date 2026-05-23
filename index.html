@@ -18,6 +18,7 @@
     <!-- Firebase SDK (Compat Version) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
@@ -91,6 +92,9 @@
                     <a href="#" class="nav-item sub-item" onclick="window.print()" style="padding-left: 1rem;">
                         <i class='bx bxs-file-pdf' style="font-size: 1.1rem; margin-right: 0.5rem; color: var(--text-secondary);"></i> Save as PDF Report
                     </a>
+                                        <a href="#" class="nav-item sub-item" onclick="handleLogout()" style="padding-left: 1rem; color: #ff4444;">
+                        <i class='bx bx-log-out' style="font-size: 1.1rem; margin-right: 0.5rem; color: #ff4444;"></i> Secure Sign Out
+                    </a>
                     <input type="file" id="import-file" style="display: none;" accept=".json,application/json,text/plain,*/*" onchange="importData(event)">
                 </div>
             </nav>
@@ -126,6 +130,26 @@
                 <!-- Content will be injected here by JS -->
             </div>
         </main>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="login-overlay" style="display: none;">
+        <div class="login-box glass-panel">
+            <div class="login-header">
+                <i class='bx bxs-lock-alt' style="font-size: 2.5rem; color: var(--accent-blue); margin-bottom: 1rem; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.4));"></i>
+                <h2>Secure Login</h2>
+                <p>Please log in to view and edit your tracker.</p>
+            </div>
+            <div class="login-form">
+                <input type="email" id="login-email" placeholder="Email Address" class="login-input" />
+                <input type="password" id="login-password" placeholder="Password" class="login-input" />
+                <button onclick="handleLogin()" class="login-btn" id="login-btn">
+                    Sign In
+                </button>
+                <p id="login-error" style="color: #ff4444; font-size: 0.8rem; margin-top: 1rem; display: none; text-align: center;"></p>
+            </div>
+        </div>
+    </div>
+
     </div>
 
     <!-- Custom JS -->
