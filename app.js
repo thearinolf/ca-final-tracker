@@ -1077,85 +1077,70 @@ function getChapterMetadata(subjectId, chapterIndex) {
 // State Management
 let progressData = {};
 
-async function initData() {
-    if (db) {
-        try {
-            const snapshot = await db.ref('userData').once('value');
-            const cloudData = snapshot.val();
-            if (cloudData) {
-                if (cloudData.progressData) progressData = cloudData.progressData;
-                if (cloudData.examDate) localStorage.setItem('caFinalExamDate', cloudData.examDate);
-                if (cloudData.schedule) localStorage.setItem('caFinalSchedule', JSON.stringify(cloudData.schedule));
-                if (cloudData.mocks) localStorage.setItem('caFinalMocks', JSON.stringify(cloudData.mocks));
-            }
-        } catch (e) {
-            console.error("Firebase load error", e);
-        }
-    }
+function initData() {
+    // 1. Load from LocalStorage instantly
+    const stored = localStorage.getItem('caFinalProgress');
+    if (stored) progressData = JSON.parse(stored);
     
-    // Fallback if cloudData didn't populate progressData
-    if (Object.keys(progressData).length === 0) {
-        const stored = localStorage.getItem('caFinalProgress');
-        if (stored) progressData = JSON.parse(stored);
-    }
-    
-    if (true) {
-        
-        // Patch missing subjects or chapters if syllabus was updated
-        let updated = false;
-        Object.keys(CA_SYLLABUS).forEach(subjectId => {
-            if (!progressData[subjectId]) {
-                progressData[subjectId] = {};
-                updated = true;
-            }
-            
-            CA_SYLLABUS[subjectId].chapters.forEach((_, index) => {
-                const metrics = getMetricsForChapter(subjectId, index);
-                if (!progressData[subjectId][index]) {
-                    progressData[subjectId][index] = {};
-                    metrics.forEach(m => {
-                        progressData[subjectId][index][m.id] = m.type === 'date' ? '' : false;
-                    });
-                    updated = true;
-                } else {
-                    // Check if new metrics were added
-                    metrics.forEach(m => {
-                        if (progressData[subjectId][index][m.id] === undefined) {
-                            progressData[subjectId][index][m.id] = m.type === 'date' ? '' : false;
-                            updated = true;
-                        }
-                    });
-                }
-            });
-        });
-        
-        // Data migration from split subjects back to unified ADVANCED_ICITSS if user has old data
-        if (progressData['Adv_ITT'] && !progressData['ADVANCED_ICITSS'][0]?.test_result) {
-            progressData['ADVANCED_ICITSS'][0] = progressData['Adv_ITT'][0];
-            updated = true;
-        }
-        if (progressData['MCS'] && !progressData['ADVANCED_ICITSS'][1]?.certificate) {
-            progressData['ADVANCED_ICITSS'][1] = progressData['MCS'][0];
-            updated = true;
-        }
-
-        if (updated) saveData();
-        
-    } else {
-        // Initialize empty data
-        Object.keys(CA_SYLLABUS).forEach(subjectId => {
+    // 2. Patch missing subjects
+    let updated = false;
+    Object.keys(CA_SYLLABUS).forEach(subjectId => {
+        if (!progressData[subjectId]) {
             progressData[subjectId] = {};
-            CA_SYLLABUS[subjectId].chapters.forEach((_, index) => {
-                const metrics = getMetricsForChapter(subjectId, index);
+            updated = true;
+        }
+        CA_SYLLABUS[subjectId].chapters.forEach((_, index) => {
+            const metrics = getMetricsForChapter(subjectId, index);
+            if (!progressData[subjectId][index]) {
                 progressData[subjectId][index] = {};
                 metrics.forEach(m => {
                     progressData[subjectId][index][m.id] = m.type === 'date' ? '' : false;
                 });
-            });
+                updated = true;
+            }
         });
-        saveData();
+    });
+    
+    if (updated) {
+        // don't trigger firebase save during init patching
+        localStorage.setItem('caFinalProgress', JSON.stringify(progressData));
+    }
+
+    // 3. Fetch from Firebase in background
+    if (db) {
+        db.ref('userData').once('value').then(snapshot => {
+            const cloudData = snapshot.val();
+            if (cloudData) {
+                let changed = false;
+                if (cloudData.progressData) { progressData = cloudData.progressData; changed = true; }
+                if (cloudData.examDate) { localStorage.setItem('caFinalExamDate', cloudData.examDate); changed = true; }
+                if (cloudData.schedule) { localStorage.setItem('caFinalSchedule', JSON.stringify(cloudData.schedule)); changed = true; }
+                if (cloudData.mocks) { localStorage.setItem('caFinalMocks', JSON.stringify(cloudData.mocks)); changed = true; }
+                
+                if (changed) {
+                    updateOverallProgress();
+                    // Check which view is active and re-render
+                    const activeView = document.querySelector('.nav-item.active');
+                    if (activeView) {
+                        const view = activeView.getAttribute('data-view');
+                        if (view === 'dashboard') renderDashboard();
+                        else if (view === 'subject') {
+                            const sid = activeView.getAttribute('data-subject');
+                            if (sid) renderSubjectView(sid);
+                        }
+                        else if (view === 'mock') renderMockTestsView();
+                        else if (view === 'schedule') renderScheduleView();
+                    } else {
+                        renderDashboard();
+                    }
+                }
+            }
+        }).catch(e => {
+            console.log("Firebase sync failed or blocked", e);
+        });
     }
 }
+
 
 function saveData() {
     localStorage.setItem('caFinalProgress', JSON.stringify(progressData));
@@ -2214,8 +2199,8 @@ document.querySelectorAll('.nav-item').forEach(item => {
 });
 
 // App Initialization
-document.addEventListener('DOMContentLoaded', async () => {
-    await initData();
+document.addEventListener('DOMContentLoaded', () => {
+    initData();
     updateOverallProgress();
     renderDashboard();
 });
