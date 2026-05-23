@@ -83,10 +83,10 @@
                 
                 <div class="nav-section" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
                     <h3>Data Management</h3>
-                    <a href="#" class="nav-item sub-item" onclick="exportData()" style="padding-left: 1rem;">
+                    <a href="#" id="btn-backup" class="nav-item sub-item" onclick="exportData()" style="padding-left: 1rem;">
                         <i class='bx bx-cloud-download' style="font-size: 1.1rem; margin-right: 0.5rem; color: var(--text-secondary);"></i> Backup Data (.json)
                     </a>
-                    <a href="#" class="nav-item sub-item" onclick="document.getElementById('import-file').click()" style="padding-left: 1rem;">
+                    <a href="#" id="btn-restore" class="nav-item sub-item" onclick="document.getElementById('import-file').click()" style="padding-left: 1rem;">
                         <i class='bx bx-cloud-upload' style="font-size: 1.1rem; margin-right: 0.5rem; color: var(--text-secondary);"></i> Restore Data (.json)
                     </a>
                     <a href="#" class="nav-item sub-item" onclick="window.print()" style="padding-left: 1rem;">

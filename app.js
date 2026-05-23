@@ -1392,12 +1392,12 @@ function renderDashboard() {
     const percentage = globalTotal === 0 ? 0 : Math.round((globalEarned / globalTotal) * 100);
     
     let html = `
-        <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="view-header dashboard-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 1rem; margin-bottom: 1.5rem;">
             <div style="flex-shrink: 0;">
-                <h2 style="white-space: nowrap;">Welcome Back, Arinolf !!</h2>
+                <h2 style="white-space: nowrap;">Welcome Back, ${auth && auth.currentUser && auth.currentUser.email === 'arinolf@tracker.com' ? 'Arinolf' : 'Wonderer'} !!</h2>
                 <p style="color: #ff4444; font-weight: bold; font-size: 1.05rem; margin-top: 0.5rem; letter-spacing: 0.02em; white-space: nowrap;">There is no peace without a great war.</p>
             </div>
-            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: nowrap; flex-shrink: 0;">
+            <div class="dashboard-stats" style="display: flex; gap: 1rem; align-items: center; flex-wrap: nowrap; flex-shrink: 0;">
                 <div class="countdown-card glass-panel" style="padding: 1rem 1.5rem; display: flex; gap: 2rem; align-items: center; border-color: rgba(59, 130, 246, 0.3); background: rgba(0, 53, 107, 0.4);">
                     <div>
                         <p style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Today's Date</p>
@@ -1668,7 +1668,7 @@ function renderSubjectView(subjectId) {
     const progress = calculateSubjectProgress(subjectId);
     
     let html = `
-        <div class="view-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+        <div class="view-header subject-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
             <div style="flex: 1;">
                 <h2 style="margin: 0; font-size: 1.8rem; display: flex; align-items: center; gap: 0.8rem;">
                     <i class='bx bx-book-open' style="color: var(--${subject.color === 'blue' ? 'accent-blue' : subject.color === 'purple' ? 'accent-purple' : 'success'});"></i>
@@ -2214,10 +2214,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Update role badge
                 const isAdmin = user.email === 'arinolf@tracker.com';
-                const roleText = isAdmin ? 'ADMIN' : 'VIEWER';
+                const roleText = isAdmin ? 'ADMIN' : 'WONDERER';
                 const roleColor = isAdmin ? 'var(--success)' : 'var(--text-secondary)';
                 const badgeHtml = `<span style="font-size: 0.55rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); border: 1px solid ${roleColor}; color: ${roleColor}; margin-left: 0.75rem; font-weight: 600; letter-spacing: 1px; vertical-align: middle;">${roleText}</span>`;
                 document.querySelectorAll('.user-role-badge').forEach(el => el.innerHTML = badgeHtml);
+
+                // Hide data management buttons for viewers
+                const btnBackup = document.getElementById('btn-backup');
+                const btnRestore = document.getElementById('btn-restore');
+                if (btnBackup) btnBackup.style.display = isAdmin ? 'flex' : 'none';
+                if (btnRestore) btnRestore.style.display = isAdmin ? 'flex' : 'none';
 
                 initData();
                 updateOverallProgress();

@@ -876,6 +876,53 @@ body {
         font-weight: 600;
         margin-right: 1rem;
     }
+
+    /* Dashboard Header Left Aligned */
+    .dashboard-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1.5rem !important;
+    }
+    
+    .dashboard-stats {
+        width: 100% !important;
+        justify-content: flex-start !important;
+    }
+
+    /* Subject Headers (IBS, SPOM, ADV_ICITSS) Title Left, Percentage Right */
+    .subject-header {
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+    }
+    
+    .subject-header h2 {
+        font-size: 1.3rem !important;
+        white-space: normal !important;
+    }
+    
+    .subject-header > div:last-child {
+        min-width: max-content;
+    }
+
+    /* Move Exam Date to right end in Schedule */
+    td[data-label="Exam Date"] .custom-date-picker {
+        margin: 0 !important;
+        margin-left: auto !important;
+    }
+
+    /* Move Completion & Marks to right end in Mock Tests */
+    td[data-label="Completed"] .custom-checkbox {
+        margin: 0 !important;
+        margin-left: auto !important;
+    }
+    td[data-label="Score"] input {
+        margin: 0 !important;
+        margin-left: auto !important;
+    }
+    td[data-label="Date Taken"] .custom-date-picker {
+        margin: 0 !important;
+        margin-left: auto !important;
+    }
 }
 
 @media (max-width: 480px) {
