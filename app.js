@@ -2249,6 +2249,17 @@ window.importData = function(event) {
                     progressData = importedData;
                 }
                 
+                // Sync ALL data to Firebase at once on import
+                if (db) {
+                    showSyncing();
+                    db.ref('userData').set({
+                        progressData: progressData,
+                        examDate: localStorage.getItem('caFinalExamDate') || '',
+                        schedule: JSON.parse(localStorage.getItem('caFinalSchedule') || '{}'),
+                        mocks: JSON.parse(localStorage.getItem('caFinalMocks') || '{}')
+                    });
+                }
+                
                 saveData();
                 initData();
                 
