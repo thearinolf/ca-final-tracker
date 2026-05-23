@@ -2,6 +2,7 @@
 const firebaseConfig = {
   apiKey: "AIzaSyBcx3yRO8eXk7L8ehLuIsOQuLYM0teU4_w",
   authDomain: "ca-final-tracker-bf7e6.firebaseapp.com",
+  databaseURL: "https://ca-final-tracker-bf7e6-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "ca-final-tracker-bf7e6",
   storageBucket: "ca-final-tracker-bf7e6.firebasestorage.app",
   messagingSenderId: "1040569064589",
