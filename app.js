@@ -1829,7 +1829,7 @@ function renderSubjectView(subjectId) {
                         
                         if (metric.type === 'date') {
                             return `
-                                <div class="checkbox-wrapper" style="display: flex; flex-direction: column; align-items: center; width: 140px; flex-shrink: 0; ${pushRight}">
+                                <div class="checkbox-wrapper date-wrapper" style="display: flex; flex-direction: column; align-items: center; width: 140px; flex-shrink: 0; ${pushRight}">
                                     <div style="height: 28px; width: 100%;">
                                         <input type="text" class="custom-date-picker" data-action="subject-date" data-subject="${subjectId}" data-chapter="${index}" data-metric="${metric.id}" value="${state[metric.id] || ''}" placeholder="Select Date" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-primary); border-radius: 4px; font-family: var(--font-family); font-size: 0.85rem; height: 100%; width: 100%; padding: 0 10px; cursor: pointer; outline: none; text-align: center;">
                                     </div>
@@ -1892,15 +1892,15 @@ function renderScheduleView() {
         
         html += `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;">
-                <td style="padding: 1rem 1.5rem;">
+                <td style="padding: 1rem 1.5rem;" data-label="Subject">
                     <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 2px 0;">Group ${subject.group}</p>
                     <h4 style="margin: 0; font-size: 1.05rem;">${subject.name}</h4>
                 </td>
-                <td style="padding: 1rem 1.5rem; text-align: center; vertical-align: middle;">
+                <td style="padding: 1rem 1.5rem; text-align: center; vertical-align: middle;" data-label="Days Left">
                     <h3 id="schedule-daysleft-${subjectId}" style="color: var(--accent-blue); font-size: 1.5rem; line-height: 1; margin: 0;">${daysLeft}</h3>
                 </td>
-                <td style="padding: 1rem 1.5rem; text-align: center; vertical-align: middle;">
-                    <div style="height: 38px; width: 180px; margin: 0 auto;">
+                <td style="padding: 1rem 1.5rem; text-align: center; vertical-align: middle;" data-label="Exam Date">
+                    <div style="height: 38px; width: 180px; max-width: 100%; margin: 0 auto;">
                         <input type="text" class="custom-date-picker" data-action="schedule-date" data-subject="${subjectId}" value="${dateValue}" placeholder="Select Date" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-primary); border-radius: 6px; font-family: var(--font-family); font-size: 0.95rem; font-weight: 500; height: 100%; width: 100%; padding: 0 10px; cursor: pointer; outline: none; text-align: center; transition: border-color 0.2s, background 0.2s;">
                     </div>
                 </td>
@@ -1972,26 +1972,26 @@ function renderMockTestView() {
         
         html += `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;">
-                <td style="padding: 1rem 1.5rem;">
+                <td style="padding: 1rem 1.5rem;" data-label="Subject">
                     <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 2px 0;">Group ${subject.group}</p>
                     <h4 style="margin: 0; font-size: 1.05rem;">${subject.name}</h4>
                 </td>
-                <td style="padding: 1rem 1.5rem; text-align: center;">
+                <td style="padding: 1rem 1.5rem; text-align: center;" data-label="Completed">
                     <div class="custom-checkbox ${data.completed ? 'checked' : ''}" 
                          onclick="toggleMockCheck(this, '${subjectId}', 'mock1')"
                          style="margin: 0 auto;">
                         <input type="checkbox" ${data.completed ? 'checked' : ''}>
                     </div>
                 </td>
-                <td style="padding: 1rem 1.5rem;">
-                    <div style="height: 36px; width: 140px;">
+                <td style="padding: 1rem 1.5rem;" data-label="Date Taken">
+                    <div style="height: 36px; width: 140px; max-width: 100%;">
                         <input type="text" class="custom-date-picker" data-action="mock-date" data-subject="${subjectId}" value="${data.date}" placeholder="Select Date" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-primary); border-radius: 4px; font-family: var(--font-family); font-size: 0.85rem; height: 100%; width: 100%; padding: 0 10px; cursor: pointer; outline: none; text-align: center;">
                     </div>
                 </td>
-                <td style="padding: 1rem 1.5rem;">
+                <td style="padding: 1rem 1.5rem;" data-label="Score">
                     <input type="text" value="${data.score}" onblur="updateMockData('${subjectId}', 'mock1', 'score', this.value)" placeholder="-- / 100" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-primary); border-radius: 4px; font-family: var(--font-family); font-size: 1rem; height: 36px; width: 80px; text-align: center; outline: none; display: block; margin: 0 auto; transition: border-color 0.2s;">
                 </td>
-                <td style="padding: 1rem 1.5rem; text-align: right;">
+                <td style="padding: 1rem 1.5rem; text-align: right;" data-label="Overall Progress">
                     <h3 id="mock-progress-${subjectId}" style="color: var(--accent-blue); margin: 0; font-size: 1.4rem;">${calculateSubjectProgress(subjectId)}%</h3>
                 </td>
             </tr>
@@ -2211,6 +2211,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const overlay = document.getElementById('login-overlay');
             if (user) {
                 if (overlay) overlay.style.display = 'none';
+                
+                // Update role badge
+                const isAdmin = user.email === 'arinolf@tracker.com';
+                const roleText = isAdmin ? 'ADMIN' : 'VIEWER';
+                const roleColor = isAdmin ? 'var(--success)' : 'var(--text-secondary)';
+                const badgeHtml = `<span style="font-size: 0.55rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); border: 1px solid ${roleColor}; color: ${roleColor}; margin-left: 0.75rem; font-weight: 600; letter-spacing: 1px; vertical-align: middle;">${roleText}</span>`;
+                document.querySelectorAll('.user-role-badge').forEach(el => el.innerHTML = badgeHtml);
+
                 initData();
                 updateOverallProgress();
                 renderDashboard();
