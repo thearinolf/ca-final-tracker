@@ -1637,11 +1637,11 @@ function renderIBSDashboard() {
                                 <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary); line-height: 1.2;">${c.id}</div>
                                 <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${subName}</div>
                             </td>
-                            <td style="padding: 12px 16px; vertical-align: middle; text-align: center;">
-                                <span style="display: inline-block; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; color: var(--text-primary);">${c.weight * 100}%</span>
+                            <td data-label="Weightage" style="padding: 12px 16px; vertical-align: middle; text-align: center;">
+                                <span style="display: inline-block; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; color: var(--text-primary); margin-left: auto;">${c.weight * 100}%</span>
                             </td>
-                            <td style="padding: 12px 16px; vertical-align: middle;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
+                            <td data-label="Progress" style="padding: 12px 16px; vertical-align: middle; width: 100%;">
+                                <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
                                     <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden;">
                                         <div style="height: 100%; width: ${subProgress}%; background: ${barColor}; border-radius: 3px; transition: width 0.4s ease;"></div>
                                     </div>
